@@ -1,0 +1,9 @@
+report.pdf
+*~
+#*
+*__py*
+*bench*	
+*.aux
+*.log
+reportNotes.bib
+*.pyc
