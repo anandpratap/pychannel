@@ -90,13 +90,13 @@ class StressOmegaEquation(LaminarEquation):
         S33 = np.zeros_like(u)
         
         k = -0.5*(R11 + R22 + R33)
-        P_trace = 0.5*(P11 + P12 + P22)
-        S_trace = (S11 + S12 + S22)
+        P_trace = 0.5*(P11 + P22 + P33)
+        S_trace = (S11 + S22 + S33)
         
-        PI11 = beta_star*C1*omega*(R11 + 2.0/3.0*k) - alpha_hat*(P11 - 2.0/3.0*P_trace) - beta_hat*(D11 - 2.0/3.0*P_trace) - gamma_hat*k*(S11 - 1.0/3.0*S_trace)
+        PI11 = beta_star*C1*omega*(R11 + 2.0/3.0*k) - alpha_hat*(P11 - 2.0/3.0*P_trace) - beta_hat*(D11 - 2.0/3.0*P_trace)
         PI12 = beta_star*C1*omega*R12 - alpha_hat*P12 - beta_hat*D12 - gamma_hat*k*S12
-        PI22 = beta_star*C1*omega*(R22 + 2.0/3.0*k) - alpha_hat*(P22 - 2.0/3.0*P_trace) - beta_hat*(D22 - 2.0/3.0*P_trace) - gamma_hat*k*(S22 - 1.0/3.0*S_trace)
-        PI33 = beta_star*C1*omega*(R33 + 2.0/3.0*k) - alpha_hat*(P33 - 2.0/3.0*P_trace) - beta_hat*(D33 - 2.0/3.0*P_trace) - gamma_hat*k*(S33 - 1.0/3.0*S_trace)
+        PI22 = beta_star*C1*omega*(R22 + 2.0/3.0*k) - alpha_hat*(P22 - 2.0/3.0*P_trace) - beta_hat*(D22 - 2.0/3.0*P_trace)
+        PI33 = beta_star*C1*omega*(R33 + 2.0/3.0*k) - alpha_hat*(P33 - 2.0/3.0*P_trace) - beta_hat*(D33 - 2.0/3.0*P_trace)
         
         nut = k/(omega + 1e-16)
         
