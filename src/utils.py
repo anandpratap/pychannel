@@ -1,4 +1,5 @@
 import numpy as np
+from schemes import diff
 
 class Data(object):
     def __init__(self):
@@ -21,9 +22,21 @@ def load_solution_ktau(dir_):
     y = np.loadtxt("%s/y"%dir_).astype(np.complex)
     u = np.loadtxt("%s/u"%dir_).astype(np.complex)
     k = np.loadtxt("%s/k"%dir_).astype(np.complex)
-    omega = np.loadtxt("%s/omega"%dir_).astype(np.complex)
     tau = np.loadtxt("%s/tau"%dir_).astype(np.complex)
     return y, u, k, tau
+
+def load_solution_stressomega(dir_):
+    y = np.loadtxt("%s/y"%dir_).astype(np.complex)
+    u = np.loadtxt("%s/u"%dir_).astype(np.complex)
+    omega = np.loadtxt("%s/omega"%dir_).astype(np.complex)
+    k = np.loadtxt("%s/k"%dir_).astype(np.complex)
+    dudy = diff(y, u)
+    nut = k/(omega + 1e-16)
+    R11 = np.loadtxt("%s/R11"%dir_).astype(np.complex)[:201]
+    R12 = np.loadtxt("%s/R12"%dir_).astype(np.complex)[:201]
+    R22 = np.loadtxt("%s/R22"%dir_).astype(np.complex)[:201]
+    R33 = np.loadtxt("%s/R33"%dir_).astype(np.complex)[:201]
+    return y, u, R11, R12, R22, R33, omega
 
 def load_solution_laminar(dir_):
     y = np.loadtxt("%s/y"%dir_).astype(np.complex)
