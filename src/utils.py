@@ -17,6 +17,14 @@ def load_solution_komega(dir_):
     omega = np.loadtxt("%s/omega"%dir_).astype(np.complex)
     return y, u, k, omega
 
+def load_solution_ktau(dir_):
+    y = np.loadtxt("%s/y"%dir_).astype(np.complex)
+    u = np.loadtxt("%s/u"%dir_).astype(np.complex)
+    k = np.loadtxt("%s/k"%dir_).astype(np.complex)
+    omega = np.loadtxt("%s/omega"%dir_).astype(np.complex)
+    tau = np.loadtxt("%s/tau"%dir_).astype(np.complex)
+    return y, u, k, tau
+
 def load_solution_laminar(dir_):
     y = np.loadtxt("%s/y"%dir_).astype(np.complex)
     u = np.loadtxt("%s/u"%dir_).astype(np.complex)

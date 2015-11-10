@@ -58,19 +58,19 @@ class LaminarEquation(object):
             A[i,i] = 1./dt[i]
         A = A - dRdq
         dq = np.linalg.solve(A, R.astype(np.float64))
-        return dq
+        l2norm = np.sqrt(sum(R**2))/np.size(R)
+        return dq, l2norm
         
-    def boundary(self):
+    def boundary(self, q):
         pass
 
     def solve(self):
         q = np.copy(self.q)
         dt = self.dt
         for i in range(self.maxiter):
-            dq = self.step(q, dt)
+            dq, l2norm = self.step(q, dt)
             q[:] = q[:] + dq[:]
-            self.boundary()
-            l2norm = np.sqrt(sum(dq**2))/np.size(q)
+            self.boundary(q)
             print "Iteration: %i Norm: %1.2e"%(i, l2norm)
             self.save(q)
             if l2norm < self.tol:
