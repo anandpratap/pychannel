@@ -10,7 +10,7 @@ dirname ="base_solution"
 y, u, R11, R12, R22, R33, omega = load_solution_stressomega(dirname)
 Retau = 550.0
 eqn = StressOmegaEquation(y, u, R11, R12, R22, R33, omega, Retau)
-eqn.writedir = "solution"
+eqn.writedir = "solution/stress_omega"
 eqn.dt = 1e2
 eqn.force_boundary = False
 eqn.tol = 1e-7
@@ -20,7 +20,7 @@ dns, wilcox = load_data()
 plt.figure(1)
 plt.semilogx(eqn.yp, eqn.up, 'g-', label=r'$stress-\omega$')
 plt.semilogx(dns.yp[::5], dns.u[::5], 'b.', label=r'DNS')
-plt.semilogx(wilcox.y, wilcox.u, 'r--', label=r'Wilcox $k-\omega$')
+plt.semilogx(wilcox.y, wilcox.u, 'r--', label=r'Wilcox $stress-\omega$')
 plt.xlabel(r"$y^+$")
 plt.ylabel(r"$u^+$")
 plt.legend(loc=2)
@@ -30,7 +30,7 @@ plt.savefig("figs/stress_omega_u.pdf")
 plt.figure(2)
 plt.loglog(eqn.yp, eqn.kp, 'g-', label=r'$stress-\omega$')
 plt.loglog(dns.yp[::5], dns.k[::5], 'b.', label=r'DNS')
-plt.loglog(wilcox.y, wilcox.k, 'r--', label=r'Wilcox $k-\omega$')
+plt.loglog(wilcox.y, wilcox.k, 'r--', label=r'Wilcox $stress-\omega$')
 plt.xlabel(r"$y^+$")
 plt.ylabel(r"$k^+$")
 plt.legend(loc=2)
@@ -48,7 +48,7 @@ plt.gca().set_ylim(bottom=0)
 plt.subplot(221)
 plt.plot(eqn.yp, eqn.R12, 'g-', label=r'$stress-\omega$')
 plt.plot(dns.yp[::5], -dns.uv[::5], 'b.', label=r'DNS')
-plt.plot(wilcox.y, -wilcox.uv, 'r--', label=r'Wilcox $k-\omega$')
+plt.plot(wilcox.y, -wilcox.uv, 'r--', label=r'Wilcox $stress-\omega$')
 plt.legend(bbox_to_anchor=(2.4, 1.1))
 plt.xlabel(r"$y^+$")
 plt.ylabel(r"$-uv^+$")

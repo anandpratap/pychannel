@@ -101,10 +101,10 @@ class StressOmegaEquation(LaminarEquation):
         nut = k/(omega + 1e-16)
         
         eps_hat = 2.0/3.0*beta_star*omega*k
-        eps11 = 1.0/4.0*nu*diff2(y, -R11)
-        eps12 = 1.0/4.0*nu*diff2(y, -R12)
-        eps22 = 1.0/4.0*nu*diff2(y, -R22)
-        eps33 = 1.0/4.0*nu*diff2(y, -R33)
+        eps11 = 1.0/4.0*nu*diff2(y, -R11)*0
+        eps12 = 1.0/4.0*nu*diff2(y, -R12)*0
+        eps22 = 1.0/4.0*nu*diff2(y, -R22)*0
+        eps33 = 1.0/4.0*nu*diff2(y, -R33)*0
 
         self.P11 = P11
         self.P12 = P12
@@ -127,6 +127,8 @@ class StressOmegaEquation(LaminarEquation):
         self.eps22 = eps22
         self.eps33 = eps33
         # this might be dangerous
+        # global scoping of something
+        # that will be used as multiple places
         self.k = k
         self.nut = nut
         self.nuty = diff(y, self.nut)
@@ -191,13 +193,16 @@ class StressOmegaEquation(LaminarEquation):
         beta_0 = 0.0708
         y = self.y
         u, R11, R12, R22, R33, omega = get_var(q)
-        k = -0.5*(R11 + R22 + R33)
-        nut = k/(omega + 1e-16)
+
+        k = self.k
+        nut = self.nut
+
         nuty = diff(self.y, nut)
         uy = diff(self.y, u)
         ky = diff(self.y, k)
         omegay = diff(self.y, omega)
         omegayy = diff2(self.y, omega)
+
         lastterm = 1/(omega + 1e-16)*ky*omegay
         R = alpha*omega/(k + 1e-16)*R12*diff(y, u) - beta_0*omega**2 + omegayy*(nu + nut*sigma) + sigma*nuty*omegay + np.maximum(lastterm/8.0, 0.0)
         R[0] = -(omega[0] - 5000000*nu/0.005**2)
@@ -258,12 +263,15 @@ class StressOmegaEquation(LaminarEquation):
         q = q.astype(np.float64)
         n = self.n
         u, R11, R12, R22, R33, omega = get_var(q)
+        k = -0.5*(R11 + R22 + R33)
+        np.savetxt("%s/y"%self.writedir, self.y)
         np.savetxt("%s/u"%self.writedir, u)
         np.savetxt("%s/R11"%self.writedir, R11)
         np.savetxt("%s/R12"%self.writedir, R12)
         np.savetxt("%s/R22"%self.writedir, R22)
         np.savetxt("%s/R33"%self.writedir, R33)
         np.savetxt("%s/omega"%self.writedir, omega)
+        np.savetxt("%s/k"%self.writedir, k)
 
     def plot(self, q):
         u, R11, R12, R22, R33, omega = get_var(q)
