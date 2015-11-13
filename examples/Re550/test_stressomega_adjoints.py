@@ -23,7 +23,7 @@ dbeta = 1e-30
 for i in range(len(dJdbeta)):
     eqn.beta[i] = eqn.beta[i] + 1j*dbeta
     eqn.solve()
-    dJdbeta_cs[i] = np.imag(eqn.objfunc(eqn.q, eqn.beta))/dbeta
+    dJdbeta_cs[i] = np.imag(eqn.objective.objective(eqn.q, eqn.beta))/dbeta
     eqn.beta[i] = eqn.beta[i] - 1j*dbeta
 
 plt.figure(4)
