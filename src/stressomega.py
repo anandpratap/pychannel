@@ -4,6 +4,15 @@ import matplotlib.pyplot as plt
 from laminar import LaminarEquation
 from utils import calc_dp
 from schemes import diff, diff2
+from objectives import test_objective
+
+def get_beta(beta):
+    n = np.size(beta)
+    beta11 = beta[0:n:4]
+    beta12 = beta[1:n:4]
+    beta22 = beta[2:n:4]
+    beta33 = beta[3:n:4]
+    return beta11, beta12, beta22, beta33
 
 def get_var(q):
     n = np.size(q)
@@ -44,6 +53,9 @@ class StressOmegaEquation(LaminarEquation):
         self.rho = 1.0
         self.dp = calc_dp(self.Retau, self.nu)
 
+        self.beta = np.ones(ny*4, dtype=y.dtype)
+        self.objfunc = test_objective
+  
     def calc_momentum_residual(self, q):
         u, R11, R12, R22, R33, omega = get_var(q)
         y = self.y
@@ -142,7 +154,8 @@ class StressOmegaEquation(LaminarEquation):
         R = np.zeros_like(u)
         R11y = diff(y, R11)
         R11yy = diff2(y, R11)
-        R = -self.P11 + self.eps_hat + self.eps11 - self.PI11 + R11yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R11y
+        beta11, beta12, beta22, beta33 = get_beta(self.beta)
+        R = -self.P11 + beta11*self.eps_hat + self.eps11 - self.PI11 + R11yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R11y
         R[0] = -R11[0]
         R[-1] = (1.5*R11[-1] - 2.0*R11[-2] + 0.5*R11[-3])/(y[-1] - y[-2])
         return R
@@ -155,7 +168,8 @@ class StressOmegaEquation(LaminarEquation):
         R = np.zeros_like(u)
         R12y = diff(y, R12)
         R12yy = diff2(y, R12)
-        R = -self.P12 + self.eps12 - self.PI12 + R12yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R12y
+        beta11, beta12, beta22, beta33 = get_beta(self.beta)
+        R = -self.P12 + self.eps12 - self.PI12*beta12 + R12yy*(self.nu + self.nut*sigma_star)*beta12 + sigma_star*self.nuty*R12y*beta12
         R[0] = -R12[0]
         R[-1] = -R12[-1]
         return R
@@ -168,7 +182,8 @@ class StressOmegaEquation(LaminarEquation):
         R = np.zeros_like(u)
         R22y = diff(y, R22)
         R22yy = diff2(y, R22)
-        R = -self.P22 + self.eps_hat + self.eps22 - self.PI22 + R22yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R22y
+        beta11, beta12, beta22, beta33 = get_beta(self.beta)
+        R = -self.P22 + beta22*self.eps_hat + self.eps22 - self.PI22 + R22yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R22y
         R[0] = -R22[0]
         R[-1] = (1.5*R22[-1] - 2.0*R22[-2] + 0.5*R22[-3])/(y[-1] - y[-2])
         return R
@@ -181,7 +196,8 @@ class StressOmegaEquation(LaminarEquation):
         R = np.zeros_like(u)
         R33y = diff(y, R33)
         R33yy = diff2(y, R33)
-        R = -self.P33 + self.eps_hat + self.eps33 - self.PI33 + R33yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R33y
+        beta11, beta12, beta22, beta33 = get_beta(self.beta)
+        R = -self.P33 + beta33*self.eps_hat + self.eps33 - self.PI33 + R33yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R33y
         R[0] = -R33[0]
         R[-1] = (1.5*R33[-1] - 2.0*R33[-2] + 0.5*R33[-3])/(y[-1] - y[-2])
         return R
