@@ -71,7 +71,7 @@ def load_data():
     DNS.eps = eps
     DNS.kprod = kprod
     
-    wilcox = np.loadtxt("data/wilcox.dat")
+    wilcox = np.loadtxt("data/wilcox_sw.dat")
     yw = wilcox[:,2]
     uw = wilcox[:,3]
     uvw = -wilcox[:,4]
@@ -85,4 +85,20 @@ def load_data():
     Wilcox.e = ew
     Wilcox.p = pw
     Wilcox.uv = uvw
-    return DNS, Wilcox
+
+    wilcox = np.loadtxt("data/wilcox.dat")
+    yw = wilcox[:,2]
+    uw = wilcox[:,3]
+    uvw = -wilcox[:,4]
+    kw = wilcox[:,5]
+    ew = wilcox[:,6]
+    pw = wilcox[:,7]
+    Wilcox_kw = Data()
+    Wilcox_kw.y = yw
+    Wilcox_kw.u = uw
+    Wilcox_kw.k = kw
+    Wilcox_kw.e = ew
+    Wilcox_kw.p = pw
+    Wilcox_kw.uv = uvw
+
+    return DNS, Wilcox, Wilcox_kw
