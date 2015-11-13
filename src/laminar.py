@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
+from scipy import linalg
 from utils import calc_dp
 from schemes import diff, diff2
+from objectives import test_objective
 
 class LaminarEquation(object):
     def __init__(self, y, u, Retau):
@@ -13,13 +14,15 @@ class LaminarEquation(object):
         #
         self.n = np.size(y)
         self.writedir = "."
-        self.maxiter = 10
+        self.maxiter = 20
         self.tol = 1e-13
         self.dt = 1e10
         self.neq = 1
         self.nu = 1e-4
         self.rho = 1.0
         self.dp = calc_dp(self.Retau, self.nu)
+        self.beta = np.ones_like(u)
+        self.objfunc = test_objective
 
     def calc_residual(self, q):
         R = np.zeros_like(q)
@@ -30,14 +33,62 @@ class LaminarEquation(object):
         u = q[0:self.n]
         y = self.y
         uyy = diff2(y, u)
-        R = self.nu*uyy - self.dp/self.rho
+        R = self.beta*self.nu*uyy - self.dp/self.rho
         R[0] = -u[0]
         R[-1] = (1.5*u[-1] - 2.0*u[-2] + 0.5*u[-3])/(y[-1] - y[-2])
         return R
+    def calc_delJ_delbeta(self, q, beta):
+        n = np.size(beta)
+        dbeta = 1e-20
+        dJdbeta = np.zeros_like(beta)
+        for i in range(n):
+            beta[i] = beta[i] + 1j*dbeta
+            F = self.objfunc(q, beta)
+            dJdbeta[i] = np.imag(F)/dbeta
+            beta[i] = beta[i] - 1j*dbeta
+        return dJdbeta
 
-    def calc_residual_jacobian(self, q, dq=1e-20):
+    def calc_delJ_delq(self, q, beta):
         n = np.size(q)
-        dRdq = np.zeros([n, n], dtype=np.float64)
+        dq = 1e-30
+        dJdq = np.zeros_like(q)
+        for i in range(n):
+            q[i] = q[i] + 1j*dq
+            F = self.objfunc(q, beta)
+            dJdq[i] = np.imag(F)/dq
+            q[i] = q[i] - 1j*dq
+        return dJdq
+
+    def calc_psi(self, q, beta):
+        dRdq = self.calc_residual_jacobian(q)
+        dJdq = self.calc_delJ_delq(q, beta)
+        psi = linalg.solve(dRdq.transpose(), -dJdq.transpose())
+        return psi
+
+    def calc_delR_delbeta(self, q):
+        nb = np.size(self.beta)
+        n = np.size(q)
+        dbeta = 1e-30
+        dRdbeta = np.zeros([n,nb], dtype=q.dtype)
+        for i in range(nb):
+            self.beta[i] = self.beta[i] + 1j*dbeta
+            R = self.calc_residual(q)
+            dRdbeta[:,i] = np.imag(R[:])/dbeta
+            self.beta[i] = self.beta[i] - 1j*dbeta
+        return dRdbeta
+
+    def calc_sensitivity(self):
+        q = self.q
+        beta = self.beta
+        psi = self.calc_psi(q, beta)
+        delJdelbeta = self.calc_delJ_delbeta(q, beta)
+        delRdelbeta = self.calc_delR_delbeta(q)
+        dJdbeta = delJdelbeta + psi.transpose().dot(delRdelbeta)
+        return dJdbeta
+        
+    def calc_residual_jacobian(self, q, dq=1e-25):
+        n = np.size(q)
+        dRdq = np.zeros([n, n], dtype=q.dtype)
         for i in range(n):
             q[i] = q[i] + 1j*dq
             R = self.calc_residual(q)
@@ -57,8 +108,8 @@ class LaminarEquation(object):
         for i in range(0, n):
             A[i,i] = 1./dt[i]
         A = A - dRdq
-        dq = np.linalg.solve(A, R.astype(np.float64))
-        l2norm = np.sqrt(sum(R**2))/np.size(R)
+        dq = linalg.solve(A, R)
+        l2norm = linalg.norm(R)/np.size(R)
         return dq, l2norm
         
     def boundary(self, q):
