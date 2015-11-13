@@ -3,7 +3,7 @@ import numpy as np
 from scipy import linalg
 from utils import calc_dp
 from schemes import diff, diff2
-from objectives import test_objective
+from objectives import TestObjective
 
 class LaminarEquation(object):
     def __init__(self, y, u, Retau):
@@ -22,8 +22,8 @@ class LaminarEquation(object):
         self.rho = 1.0
         self.dp = calc_dp(self.Retau, self.nu)
         self.beta = np.ones_like(u)
-        self.objfunc = test_objective
-
+        self.objective = TestObjective()
+        
     def calc_residual(self, q):
         R = np.zeros_like(q)
         R[:] = self.calc_momentum_residual(q)
@@ -43,7 +43,7 @@ class LaminarEquation(object):
         dJdbeta = np.zeros_like(beta)
         for i in range(n):
             beta[i] = beta[i] + 1j*dbeta
-            F = self.objfunc(q, beta)
+            F = self.objective.objective(q, beta)
             dJdbeta[i] = np.imag(F)/dbeta
             beta[i] = beta[i] - 1j*dbeta
         return dJdbeta
@@ -54,7 +54,7 @@ class LaminarEquation(object):
         dJdq = np.zeros_like(q)
         for i in range(n):
             q[i] = q[i] + 1j*dq
-            F = self.objfunc(q, beta)
+            F = self.objective.objective(q, beta)
             dJdq[i] = np.imag(F)/dq
             q[i] = q[i] - 1j*dq
         return dJdq

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from laminar import LaminarEquation
 from utils import calc_dp
 from schemes import diff, diff2
-from objectives import test_objective
+from objectives import TestObjective
 
 def get_beta(beta):
     n = np.size(beta)
@@ -54,7 +54,7 @@ class StressOmegaEquation(LaminarEquation):
         self.dp = calc_dp(self.Retau, self.nu)
 
         self.beta = np.ones(ny*4, dtype=y.dtype)
-        self.objfunc = test_objective
+        self.objective = TestObjective()
   
     def calc_momentum_residual(self, q):
         u, R11, R12, R22, R33, omega = get_var(q)
