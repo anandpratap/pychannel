@@ -58,8 +58,10 @@ class InverseSolver(object):
 
     def linesearch(self, stepsize, pk):
         beta_ = self.eqn.beta.copy()
+        q_ = self.eqn.q.copy()
         J_ = self.eqn.objective.objective(self.eqn.q, self.eqn.beta)
         for i in range(10):
+            self.eqn.q[:] = q_[:]
             self.eqn.beta = beta_ + pk*stepsize
             self.eqn.solve()
             J = self.eqn.objective.objective(self.eqn.q, self.eqn.beta)
@@ -97,9 +99,25 @@ class InverseSolver(object):
             plt.ion()
             plt.figure(1)
             plt.clf()
+            plt.subplot(321)
             plt.semilogx(self.eqn.yp, self.eqn.q[::6], "r-", label="Inverse")
-            plt.semilogx(self.eqn.yp, self.eqn.objective.val_target, label="DNS")
-            plt.legend(loc=2)
+            plt.semilogx(self.eqn.yp, self.eqn.objective.val_target[::6], label="DNS")
+            plt.subplot(322)
+            plt.plot(self.eqn.yp, -self.eqn.q[1::6], "r-", label="Inverse")
+            plt.plot(self.eqn.yp, -self.eqn.objective.val_target[1::6], label="DNS")
+            plt.subplot(323)
+            plt.plot(self.eqn.yp, self.eqn.q[2::6], "r-", label="Inverse")
+            plt.plot(self.eqn.yp, self.eqn.objective.val_target[2::6], label="DNS")
+            plt.subplot(324)
+            plt.plot(self.eqn.yp, -self.eqn.q[3::6], "r-", label="Inverse")
+            plt.plot(self.eqn.yp, -self.eqn.objective.val_target[3::6], label="DNS")
+            plt.subplot(325)
+            plt.plot(self.eqn.yp, -self.eqn.q[4::6], "r-", label="Inverse")
+            plt.plot(self.eqn.yp, -self.eqn.objective.val_target[4::6], label="DNS")
+            plt.subplot(326)
+            plt.plot(self.eqn.yp, -self.eqn.q[4::6], "r-", label="Inverse")
+            plt.plot(self.eqn.yp, -self.eqn.objective.val_target[4::6], label="DNS")
+            plt.legend()
             plt.pause(0.0001)
             
         if self.dostats:
