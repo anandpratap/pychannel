@@ -21,7 +21,7 @@ eqn.solve()
 dJdbeta = eqn.calc_sensitivity()
 # complex step calculation
 dJdbeta_fd = np.zeros_like(y)
-J_base = eqn.objfunc(eqn.q, eqn.beta)
+J_base = eqn.objective.objective(eqn.q, eqn.beta)
 dbeta = 1e-4
 for i in range(len(beta)):
     beta[i] = beta[i] + dbeta
@@ -29,7 +29,7 @@ for i in range(len(beta)):
     eqn.writedir = "solution"
     eqn.beta[:] = beta[:]
     eqn.solve()
-    dJdbeta_fd[i] = (eqn.objfunc(eqn.q, eqn.beta) - J_base)/dbeta
+    dJdbeta_fd[i] = (eqn.objective.objective(eqn.q, eqn.beta) - J_base)/dbeta
     beta[i] = beta[i] - dbeta
 
 
@@ -41,7 +41,7 @@ for i in range(len(beta)):
     eqn.writedir = "solution"
     eqn.beta[:] = beta[:]
     eqn.solve()
-    dJdbeta_cs[i] = np.imag(eqn.objfunc(eqn.q, eqn.beta))/dbeta
+    dJdbeta_cs[i] = np.imag(eqn.objective.objective(eqn.q, eqn.beta))/dbeta
     beta[i] = beta[i] - 1j*dbeta
 
 assert(np.linalg.norm(eqn.uap - eqn.up)/N < h**2)

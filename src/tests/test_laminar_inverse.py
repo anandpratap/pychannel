@@ -38,6 +38,7 @@ inverse_solver.maxiter = 100
 eqn = inverse_solver.solve()
 
 plt.figure(1)
+plt.ioff()
 plt.plot(y, q_prior, "g-", label="Prior")
 plt.plot(y, eqn.q, "r-", label="Posterior")
 plt.plot(y, q_target, "bx", label="Target")
