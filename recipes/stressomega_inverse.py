@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("--tol", type=float, default=1e-5, required=True, help="Solver tolerance.")
     parser.add_argument("--maxstep", type=float, default=0.05, required=True, help="Inverse max step size.")
     parser.add_argument("--maxiter", type=int, default=10, required=True, help="Inverse max number of iterations.")
-    parser.add_argument("--restart", type=bool, default=False, required=True, help="Read beta and restart from previous state.")
+    parser.add_argument("--restart", action="store_true", help="Read beta and restart from previous state.")
     args = parser.parse_args()
 
     Retau = args.Retau
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     dirname ="base_solution"
     y, u, R11, R12, R22, R33, omega = load_solution_stressomega(dirname)
     eqn = StressOmegaEquation(y, u, R11, R12, R22, R33, omega, Retau)
-    eqn.writedir = "solution/stress_omega"
+    eqn.writedir = "solution"
     eqn.dt = dt
     eqn.force_boundary = False
     eqn.tol = tol
