@@ -1,8 +1,9 @@
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
 from laminar import LaminarEquation
-from utils import calc_dp
+from utils import calc_dp, load_solution_stressomega, load_data
 from schemes import diff, diff2
 from objectives import TestObjective
 
@@ -307,5 +308,89 @@ class StressOmegaEquation(LaminarEquation):
         plt.subplot(336)
         plt.semilogx(self.y[1:], omega[1:], 'r-')
         plt.pause(0.0001)
-#        plt.show()
-        
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--Retau", type=float, default=550.0, required=True, help="Reynolds number.")
+    parser.add_argument("--dt", type=float, default=1.0, required=True, help="Solver time step.")
+    parser.add_argument("--tol", type=float, default=1e-10, required=True, help="Solver convergence tolerance.")
+    parser.add_argument("--maxiter", type=int, default=10, required=True, help="Solver max iteration.")
+    parser.add_argument("--force_boundary", action="store_true", help="Force boundary.")
+    args = parser.parse_args()
+
+    Retau = args.Retau
+    dt = args.dt
+    tol = args.tol
+    maxiter = args.maxiter
+    force_boundary = args.force_boundary
+
+    dirname ="base_solution"
+    y, u, R11, R12, R22, R33, omega = load_solution_stressomega(dirname)
+    eqn = StressOmegaEquation(y, u, R11, R12, R22, R33, omega, Retau)
+    eqn.writedir = "solution"
+    eqn.dt = dt
+    eqn.force_boundary = force_boundary
+    eqn.tol = tol
+    eqn.maxiter = maxiter
+    eqn.solve()
+    dns, wilcox, wilcox_kw = load_data()
+
+    plt.ioff()
+    plt.figure(11)
+    plt.semilogx(eqn.yp, eqn.up, 'g-', label=r'$stress-\omega$')
+    plt.semilogx(dns.yp[::5], dns.u[::5], 'b.', label=r'DNS')
+    plt.semilogx(wilcox.y, wilcox.u, 'r--', label=r'Wilcox $stress-\omega$')
+    plt.semilogx(wilcox_kw.y, wilcox_kw.u, 'c--', label=r'Wilcox $k-\omega$')
+    plt.xlabel(r"$y^+$")
+    plt.ylabel(r"$u^+$")
+    plt.legend(loc=2)
+    plt.tight_layout()
+    plt.savefig("figs/stress_omega_u.pdf")
+    
+    plt.figure(2)
+    plt.loglog(eqn.yp, eqn.kp, 'g-', label=r'$stress-\omega$')
+    plt.loglog(dns.yp[::5], dns.k[::5], 'b.', label=r'DNS')
+    plt.loglog(wilcox.y, wilcox.k, 'r--', label=r'Wilcox $stress-\omega$')
+    plt.semilogx(wilcox_kw.y, wilcox_kw.k, 'c--', label=r'Wilcox $k-\omega$')
+    plt.xlabel(r"$y^+$")
+    plt.ylabel(r"$k^+$")
+    plt.legend(loc=2)
+    plt.tight_layout()
+    plt.savefig("figs/stress_omega_k.pdf")
+
+    plt.figure(3)
+    plt.subplot(222)
+    plt.plot(eqn.yp, -eqn.R11, 'g-', label=r'$stress-\omega$')
+    plt.plot(dns.yp[::5], dns.ub[::5]**2, 'b.', label=r'DNS')
+    plt.xlabel(r"$y^+$")
+    plt.ylabel(r"$uu^+$")
+    plt.gca().set_ylim(bottom=0)
+    
+    plt.subplot(221)
+    plt.plot(eqn.yp, eqn.R12, 'g-', label=r'$stress-\omega$')
+    plt.plot(dns.yp[::5], -dns.uv[::5], 'b.', label=r'DNS')
+    plt.plot(wilcox.y, -wilcox.uv, 'r--', label=r'Wilcox $stress-\omega$')
+    plt.legend(bbox_to_anchor=(2.4, 1.1))
+    plt.xlabel(r"$y^+$")
+    plt.ylabel(r"$-uv^+$")
+    plt.gca().set_ylim(bottom=0)
+    
+    plt.subplot(223)
+    plt.plot(eqn.yp, -eqn.R22, 'g-', label=r'$stress-\omega$')
+    plt.plot(dns.yp[::5], dns.vb[::5]**2, 'b.', label=r'DNS')
+    plt.xlabel(r"$y^+$")
+    plt.ylabel(r"$vv^+$")
+    plt.gca().set_ylim(bottom=0)
+    
+    plt.subplot(224)
+    plt.plot(eqn.yp, -eqn.R33, 'g-', label=r'$stress-\omega$')
+    plt.plot(dns.yp[::5], dns.wb[::5]**2, 'b.', label=r'DNS')
+    plt.xlabel(r"$y^+$")
+    plt.ylabel(r"$ww^+$")
+    plt.gca().set_ylim(bottom=0)
+    plt.tight_layout()
+    plt.savefig("figs/stress_omega_reystress.pdf")
+
+    plt.show()
+
+    

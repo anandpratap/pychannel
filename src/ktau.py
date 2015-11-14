@@ -1,8 +1,9 @@
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
 from laminar import LaminarEquation
-from utils import calc_dp
+from utils import calc_dp, load_solution_ktau, load_data
 from schemes import diff, diff2
 
 def get_var(q):
@@ -83,7 +84,7 @@ class KTauEquation(LaminarEquation):
         tauy = diff(self.y, tau)
         nut = self.calc_nut(q)
         nuty = diff(self.y, nut)
-        R = nut*uy**2 - k/(tau + 1e-10) + kyy*(nu + nut/sigma_k) + nuty*ky/sigma_k
+        R = nut*uy**2 - k/(tau + 1e-16) + kyy*(nu + nut/sigma_k) + nuty*ky/sigma_k
         R[0] = -k[0]
         R[-1] = 1/(y[-1] - y[-2])*(1.5*k[-1] - 2*k[-2] + 0.5*k[-3])
         return R
@@ -125,11 +126,12 @@ class KTauEquation(LaminarEquation):
         dt = np.zeros(self.n)
         for i in range(0, self.n, 3):
             dt[i] = self.dt*1000
-            dt[i+1] = self.dt
+            dt[i+1] = self.dt*10
             dt[i+2] = self.dt
         return dt
 
     def boundary(self, q):
+        self.plot(q)
         if self.force_boundary:
             q[0] = 0.0
             q[1] = 0.0
@@ -156,13 +158,69 @@ class KTauEquation(LaminarEquation):
         np.savetxt("%s/k"%self.writedir, k)
         np.savetxt("%s/tau"%self.writedir, tau)
 
-    def plot(self):
+    def plot(self, q):
+        u, k, tau = get_var(q)
+        plt.ion()
         plt.figure(1)
+        plt.clf()
         plt.subplot(311)
-        plt.semilogx(self.yp, self.up, 'r-')
+        plt.semilogx(self.y, u, 'r-')
         plt.subplot(312)
-        plt.semilogx(self.yp, self.kp, 'r-')
+        plt.semilogx(self.y, k, 'r-')
         plt.subplot(313)
-        plt.semilogx(self.yp, self.tauy, 'r-')
-        plt.show()
-        
+        plt.semilogx(self.y, tau, 'r-')
+        plt.pause(0.0001)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--Retau", type=float, default=550.0, required=True, help="Reynolds number.")
+    parser.add_argument("--dt", type=float, default=1.0, required=True, help="Solver time step.")
+    parser.add_argument("--tol", type=float, default=1e-10, required=True, help="Solver convergence tolerance.")
+    parser.add_argument("--maxiter", type=int, default=10, required=True, help="Solver max iteration.")
+    parser.add_argument("--force_boundary", action="store_true", help="Force boundary.")
+    args = parser.parse_args()
+
+    Retau = args.Retau
+    dt = args.dt
+    tol = args.tol
+    maxiter = args.maxiter
+    force_boundary = args.force_boundary
+
+
+    dirname ="base_solution"
+    y, u, k, tau = load_solution_ktau(dirname)
+    eqn = KTauEquation(y, u, k, tau, Retau)
+    eqn.writedir = "solution"
+    eqn.dt = dt
+    eqn.tol = tol
+    eqn.maxiter = maxiter
+    eqn.force_boundary = force_boundary
+    eqn.solve()
+    dns, wilcox_sw, wilcox = load_data()
+    
+    plt.ioff()
+    plt.figure(11)
+    plt.semilogx(eqn.yp, eqn.up, 'r-', label=r'$k-\tau$')
+    plt.semilogx(dns.yp[::5], dns.u[::5], 'bo', label=r'DNS', mfc="white")
+    plt.semilogx(wilcox.y, wilcox.u, 'g-', label=r'Wilcox $k-\omega$')
+    plt.xlabel(r"$y^+$")
+    plt.ylabel(r"$u^+$")
+    plt.legend(loc=2)
+    plt.tight_layout()
+    
+    plt.figure(2)
+    plt.loglog(eqn.yp[1:], eqn.kp[1:], 'r-', label=r'$k-\tau$')
+    plt.loglog(dns.yp[1::5], dns.k[1::5], 'bo', label=r'DNS', mfc="white")
+    plt.loglog(wilcox.y[1:], wilcox.k[1:], 'g-', label=r'Wilcox $k-\omega$')
+    plt.xlabel(r"$y^+$")
+    plt.ylabel(r"$k^+$")
+    plt.legend(loc=2)
+    plt.tight_layout()
+    
+    plt.figure(3)
+    plt.loglog(eqn.yp, eqn.taup, 'r-', label=r'$k-\tau$')
+    plt.xlabel(r"$y^+$")
+    plt.ylabel(r"$\tau^+$")
+    plt.legend(loc=2)
+    plt.tight_layout()
+    plt.show()

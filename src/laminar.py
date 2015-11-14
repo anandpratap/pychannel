@@ -1,7 +1,8 @@
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import linalg
-from utils import calc_dp
+from utils import calc_dp, load_solution_laminar, load_data
 from schemes import diff, diff2
 from objectives import TestObjective
 
@@ -109,7 +110,7 @@ class LaminarEquation(object):
             A[i,i] = 1./dt[i]
         A = A - dRdq
         dq = linalg.solve(A, R)
-        l2norm = linalg.norm(R)/np.size(R)
+        l2norm = np.sqrt(sum(R**2))/np.size(R)
         return dq, l2norm
         
     def boundary(self, q):
@@ -127,6 +128,8 @@ class LaminarEquation(object):
             if l2norm < self.tol:
                 self.postprocess(q)
                 break
+
+        self.postprocess(q)
         self.q[:] = q[:]
 
     def plot(self):
@@ -152,3 +155,40 @@ class LaminarEquation(object):
     def analytic_solution(self):
         return self.dp/(2*self.nu*self.rho)*(self.y**2 - self.y)
 
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--Retau", type=float, default=550.0, required=True, help="Reynolds number.")
+    parser.add_argument("--dt", type=float, default=1.0, required=True, help="Solver time step.")
+    parser.add_argument("--tol", type=float, default=1e-10, required=True, help="Solver convergence tolerance.")
+    parser.add_argument("--maxiter", type=int, default=10, required=True, help="Solver max iteration.")
+    parser.add_argument("--force_boundary", action="store_true", help="Force boundary.")
+    args = parser.parse_args()
+
+    Retau = args.Retau
+    dt = args.dt
+    tol = args.tol
+    maxiter = args.maxiter
+    force_boundary = args.force_boundary
+
+    dirname ="base_solution"
+    y, u = load_solution_laminar(dirname)
+    Retau = Retau
+    eqn = LaminarEquation(y, u, Retau)
+    eqn.dt = dt
+    eqn.tol = tol
+    eqn.maxiter = maxiter
+    eqn.force_boundary = force_boundary
+    eqn.writedir = "solution"
+    eqn.solve()
+    dns = load_data()[0]
+    
+    plt.ioff()
+    plt.figure(1)
+    plt.semilogx(eqn.yp, eqn.up, 'r-', label=r'$k-\omega$')
+    plt.semilogx(eqn.yp[::5], eqn.uap[::5], 'bo', label=r'Analytic', mfc="white")
+    plt.xlabel(r"$y^+$")
+    plt.ylabel(r"$u^+$")
+    plt.legend(loc=2)
+    plt.tight_layout()
+    plt.show()
