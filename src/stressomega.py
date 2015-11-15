@@ -114,11 +114,7 @@ class StressOmegaEquation(LaminarEquation):
         nut = k/(omega + 1e-16)
         
         eps_hat = 2.0/3.0*beta_star*omega*k
-        eps11 = 1.0/4.0*nu*diff2(y, -R11)*0
-        eps12 = 1.0/4.0*nu*diff2(y, -R12)*0
-        eps22 = 1.0/4.0*nu*diff2(y, -R22)*0
-        eps33 = 1.0/4.0*nu*diff2(y, -R33)*0
-
+        
         self.P11 = P11
         self.P12 = P12
         self.P22 = P22
@@ -135,10 +131,7 @@ class StressOmegaEquation(LaminarEquation):
         self.PI33 = PI33
 
         self.eps_hat = eps_hat
-        self.eps11 = eps11
-        self.eps12 = eps12
-        self.eps22 = eps22
-        self.eps33 = eps33
+        
         # this might be dangerous
         # global scoping of something
         # that will be used as multiple places
@@ -156,7 +149,7 @@ class StressOmegaEquation(LaminarEquation):
         R11y = diff(y, R11)
         R11yy = diff2(y, R11)
         beta11, beta12, beta22, beta33 = get_beta(self.beta)
-        R = -self.P11 + beta11*self.eps_hat + self.eps11 - self.PI11 + R11yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R11y
+        R = -self.P11 + beta11*self.eps_hat - self.PI11 + R11yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R11y
         R[0] = -R11[0]
         R[-1] = (1.5*R11[-1] - 2.0*R11[-2] + 0.5*R11[-3])/(y[-1] - y[-2])
         return R
@@ -170,7 +163,7 @@ class StressOmegaEquation(LaminarEquation):
         R12y = diff(y, R12)
         R12yy = diff2(y, R12)
         beta11, beta12, beta22, beta33 = get_beta(self.beta)
-        R = -self.P12 + self.eps12 - self.PI12*beta12 + R12yy*(self.nu + self.nut*sigma_star)*beta12 + sigma_star*self.nuty*R12y*beta12
+        R = -self.P12 - self.PI12*beta12 + R12yy*(self.nu + self.nut*sigma_star)*beta12 + sigma_star*self.nuty*R12y*beta12
         R[0] = -R12[0]
         R[-1] = -R12[-1]
         return R
@@ -184,7 +177,7 @@ class StressOmegaEquation(LaminarEquation):
         R22y = diff(y, R22)
         R22yy = diff2(y, R22)
         beta11, beta12, beta22, beta33 = get_beta(self.beta)
-        R = -self.P22 + beta22*self.eps_hat + self.eps22 - self.PI22 + R22yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R22y
+        R = -self.P22 + beta22*self.eps_hat - self.PI22 + R22yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R22y
         R[0] = -R22[0]
         R[-1] = (1.5*R22[-1] - 2.0*R22[-2] + 0.5*R22[-3])/(y[-1] - y[-2])
         return R
@@ -198,7 +191,7 @@ class StressOmegaEquation(LaminarEquation):
         R33y = diff(y, R33)
         R33yy = diff2(y, R33)
         beta11, beta12, beta22, beta33 = get_beta(self.beta)
-        R = -self.P33 + beta33*self.eps_hat + self.eps33 - self.PI33 + R33yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R33y
+        R = -self.P33 + beta33*self.eps_hat - self.PI33 + R33yy*(self.nu + self.nut*sigma_star) + sigma_star*self.nuty*R33y
         R[0] = -R33[0]
         R[-1] = (1.5*R33[-1] - 2.0*R33[-2] + 0.5*R33[-3])/(y[-1] - y[-2])
         return R
