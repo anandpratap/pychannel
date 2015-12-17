@@ -23,7 +23,7 @@ class BayesianObjectiveU(BayesianObjective):
 
 class BayesianObjectiveAll(BayesianObjective):
     def objective(self, val, param):
-        weight_u = 1/np.mean(self.val_target[::6])
+        weight_u = 1/np.mean(self.val_target[::6])*10.0
         weight_R11 = 1/np.mean(self.val_target[1::6])
         weight_R12 = 1/np.mean(self.val_target[2::6])
         weight_R22 = 1/np.mean(self.val_target[3::6])
@@ -39,7 +39,7 @@ class BayesianObjectiveAll(BayesianObjective):
         return J
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument("--Retau", type=float, default=550.0, required=True, help="Reynolds number.")
     parser.add_argument("--objective", nargs=1, choices=__objective__choice, required=True, help="Type of objective function.")
     parser.add_argument("--dt", type=float, default=1.0, required=True, help="Solver time step.")
@@ -61,10 +61,13 @@ if __name__ == "__main__":
     y, u, R11, R12, R22, R33, omega = load_solution_stressomega(dirname)
     eqn = StressOmegaEquation(y, u, R11, R12, R22, R33, omega, Retau)
     eqn.writedir = "solution"
-    eqn.dt = dt
+    # first dt can be large as we restart from a good solution
+    eqn.dt = 1e1
     eqn.force_boundary = False
     eqn.tol = tol
     eqn.solve()
+
+    eqn.dt = dt
     eqn_prior = copy.deepcopy(eqn)
     up_prior = eqn.up.copy()
 
