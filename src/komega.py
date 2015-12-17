@@ -15,10 +15,10 @@ def get_var(q):
     return u, k, omega
 
 class KOmegaEquation(LaminarEquation):
-    def __init__(self, y, u, k, omega, Retau):
+    def __init__(self, y, u, k, omega, Retau, verbose=False):
         self.y = np.copy(y)
         ny = np.size(self.y)
-        
+        self.verbose = verbose
         self.q = np.zeros(3*ny, dtype=np.complex)
         self.Retau = Retau
         self.nu = 1e-4
@@ -30,8 +30,7 @@ class KOmegaEquation(LaminarEquation):
         self.tol = 1e-11
         self.ny = ny
         self.n = self.ny*3
-        
-        self.maxiter = 1000
+        self.maxiter = 10
         self.dt = 1e6
         self.force_boundary = False
         
@@ -43,6 +42,9 @@ class KOmegaEquation(LaminarEquation):
         self.gamma_w = 13.0/25.0
         self.sigma_k = 0.6
         self.beta_s = 0.09
+        
+        self.beta = np.ones(ny, dtype=y.dtype)
+
 
     def calc_momentum_residual(self, q):
         u, k, omega = get_var(q)
@@ -83,7 +85,7 @@ class KOmegaEquation(LaminarEquation):
         ky = diff(self.y, k)
         omegay = diff(self.y, omega)
         omegayy = diff2(self.y, omega)
-        R = gamma_w*uy**2 - beta_0*omega**2 + nu*omegayy + sigma_w*(omegay*(ky/omega - k*omegay/omega**2) + k/omega*omegayy)
+        R = self.beta*gamma_w*uy**2 - beta_0*omega**2 + nu*omegayy + sigma_w*(omegay*(ky/omega - k*omegay/omega**2) + k/omega*omegayy)
         R[0] = -(omega[0] - 5000000*nu/0.005**2)
         R[-1] = 1/(y[-1] - y[-2])*(1.5*omega[-1] - 2.0*omega[-2] + 0.5*omega[-3])
         return R
@@ -105,8 +107,8 @@ class KOmegaEquation(LaminarEquation):
         return dt
 
     def boundary(self, q):
-        self.plot(q)
         if self.force_boundary:
+            self.plot(q)
             q[0] = 0.0
             q[1] = 0.0
             q[2] = 5000000*self.nu/0.005**2

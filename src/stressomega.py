@@ -45,7 +45,7 @@ class StressOmegaEquation(LaminarEquation):
         self.ny = ny
         self.n = self.ny*6
         
-        self.maxiter = 1000
+        self.maxiter = 30
         self.dt = 1e6
         self.force_boundary = False
         

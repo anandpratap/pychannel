@@ -123,14 +123,19 @@ class LaminarEquation(object):
             dq, l2norm = self.step(q, dt)
             q[:] = q[:] + dq[:]
             self.boundary(q)
-            print "Iteration: %i Norm: %1.2e"%(i, l2norm)
-            self.save(q)
+            if self.verbose:
+                print "Iteration: %i Norm: %1.2e"%(i, l2norm)
+                self.save(q)
             if l2norm < self.tol:
                 self.postprocess(q)
                 break
-
+        
         self.postprocess(q)
         self.q[:] = q[:]
+        if l2norm > 1e-2:
+            return True
+        else:
+            return False
 
     def plot(self):
         plt.figure(1)

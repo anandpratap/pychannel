@@ -121,7 +121,13 @@ class InverseSolver(object):
                 plt.legend()
                 plt.pause(0.0001)
             except:
-                print "Unable to plot!"
+                plt.ion()
+                plt.figure(1)
+                plt.clf()
+                plt.semilogx(self.eqn.yp, self.eqn.q[::3], "r-", label="Inverse")
+                plt.semilogx(self.eqn.yp, self.eqn.objective.val_target[::3], label="DNS")
+                plt.pause(0.0001)
+                
             
         if self.dostats:
             R = self.calculate_cholesky()

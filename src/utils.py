@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 from schemes import diff
 
 class Data(object):
@@ -26,7 +28,10 @@ def load_solution_ktau(dir_):
     return y, u, k, tau
 
 def load_solution_stressomega(dir_):
-    y = np.loadtxt("%s/y"%dir_).astype(np.complex)
+    try:
+        y = np.loadtxt("%s/y"%dir_).astype(np.complex)
+    except:
+        y = np.loadtxt("base_solution/y").astype(np.complex)
     u = np.loadtxt("%s/u"%dir_).astype(np.complex)
     omega = np.loadtxt("%s/omega"%dir_).astype(np.complex)
     k = np.loadtxt("%s/k"%dir_).astype(np.complex)
@@ -38,11 +43,72 @@ def load_solution_stressomega(dir_):
     R33 = np.loadtxt("%s/R33"%dir_).astype(np.complex)[:201]
     return y, u, R11, R12, R22, R33, omega
 
+def load_solution_lrr(dir_):
+    n = 0
+    y = np.loadtxt("%s/y"%dir_).astype(np.complex)[n:]
+    #y[0] = 0.0
+    u = np.loadtxt("%s/u"%dir_).astype(np.complex)[n:]
+    omega = np.loadtxt("%s/omega"%dir_).astype(np.complex)[n:]
+    k = np.loadtxt("%s/k"%dir_).astype(np.complex)[n:]
+    epsilon = -abs(k*omega)
+    R11 = np.loadtxt("%s/R11"%dir_).astype(np.complex)[n:]
+    R12 = np.loadtxt("%s/R12"%dir_).astype(np.complex)[n:]
+    R22 = np.loadtxt("%s/R22"%dir_).astype(np.complex)[n:]
+    R33 = np.loadtxt("%s/R33"%dir_).astype(np.complex)[n:]
+    return y, u, R11, R12, R22, R33, epsilon
+
 def load_solution_laminar(dir_):
     y = np.loadtxt("%s/y"%dir_).astype(np.complex)
     u = np.loadtxt("%s/u"%dir_).astype(np.complex)
     return y, u
 
+def lowpass(y, val):
+    n = np.size(y)
+    fac = 0.8
+    nval = np.zeros_like(val)
+    for j in range(200):
+        for i in range(1, n-1):
+            dy = y[i] - y[i-1]
+            nval[i] = fac/2*val[i-1] + (1.0 - fac)*val[i] + fac/2*val[i+1]
+        val[:] = nval[:]
+    return val
+        
+def calc_initial_condition(y, Retau, nu):
+    utau = Retau*nu*2.0
+    dns = load_data()[0]
+    
+    ydns = dns.y*0.5
+    u = dns.u*utau
+    R11 = -dns.ub**2*utau**2
+    R12 = dns.uv*utau**2
+    R22 = -dns.vb**2*utau**2
+    R33 = -dns.wb**2*utau**2
+    epsilon = dns.eps*utau**4/nu
+
+    f = interp1d(ydns, u)
+    u = f(y)
+
+    f = interp1d(ydns, R11)
+    R11 = f(y)
+    
+    f = interp1d(ydns, R12)
+    R12 = f(y)
+
+    f = interp1d(ydns, R22)
+    R22 = f(y)
+    
+    f = interp1d(ydns, R33)
+    R33 = f(y)
+    
+    f = interp1d(ydns, epsilon)
+    epsilon = f(y)
+
+    # filter out the peak in R11
+    R11 = lowpass(y, R11)
+    k = -0.5*(R11 + R22 + R33)
+    omega = -epsilon/(k + 1e-8)
+    return u, R11, R12, R22, R33, k, epsilon, omega
+    
 
 def load_data():
     data = np.loadtxt("data/DNSsol.dat")
