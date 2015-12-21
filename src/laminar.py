@@ -61,7 +61,7 @@ class LaminarEquation(object):
         return dJdq
 
     def calc_psi(self, q, beta):
-        dRdq = self.calc_residual_jacobian(q)
+        dRdq = self.calc_residual_jacobian(q).astype(np.complex)
         dJdq = self.calc_delJ_delq(q, beta)
         psi = linalg.solve(dRdq.transpose(), -dJdq.transpose())
         return psi
@@ -79,8 +79,8 @@ class LaminarEquation(object):
         return dRdbeta
 
     def calc_sensitivity(self):
-        q = self.q
-        beta = self.beta
+        q = self.q.astype(np.complex)
+        beta = self.beta.astype(np.complex)
         psi = self.calc_psi(q, beta)
         delJdelbeta = self.calc_delJ_delbeta(q, beta)
         delRdelbeta = self.calc_delR_delbeta(q)

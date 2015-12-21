@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from laminar import LaminarEquation
 from utils import calc_dp, load_solution_komega, load_data
 from schemes import diff, diff2
+import komegaf as komegaf
+
 
 def get_var(q):
     n = np.size(q)
@@ -43,7 +45,7 @@ class KOmegaEquation(LaminarEquation):
         self.sigma_k = 0.6
         self.beta_s = 0.09
         
-        self.beta = np.ones(ny, dtype=y.dtype)
+        self.beta = np.ones(ny, dtype=np.complex)
 
 
     def calc_momentum_residual(self, q):
@@ -89,13 +91,18 @@ class KOmegaEquation(LaminarEquation):
         R[0] = -(omega[0] - 5000000*nu/0.005**2)
         R[-1] = 1/(y[-1] - y[-2])*(1.5*omega[-1] - 2.0*omega[-2] + 0.5*omega[-3])
         return R
-        
+    
+    def calc_delR_delbeta(self, q):
+        dRdbeta = komegaf.calc_delr_delbeta(self.y.astype(np.float64), q.astype(np.float64), np.float64(self.dp), self.beta.astype(np.float64))
+        return dRdbeta
+
+    def calc_residual_jacobian(self, q):
+        dRdqf = komegaf.calc_jacobian(self.y.astype(np.float64), q.astype(np.float64), np.float64(self.dp), self.beta.astype(np.float64))
+        return dRdqf.T
+
     def calc_residual(self, q):
         n = self.n
-        R = np.zeros_like(q)
-        R[0:n:3] = self.calc_momentum_residual(q)
-        R[1:n:3] = self.calc_k_residual(q)
-        R[2:n:3] = self.calc_omega_residual(q)
+        R = komegaf.calc_residual(self.y.astype(np.float64), q.astype(np.float64), np.float64(self.dp), self.beta.astype(np.float64))
         return R
 
     def calc_dt(self):
@@ -149,12 +156,13 @@ class KOmegaEquation(LaminarEquation):
 
         
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument("--Retau", type=float, default=550.0, required=True, help="Reynolds number.")
     parser.add_argument("--dt", type=float, default=1.0, required=True, help="Solver time step.")
     parser.add_argument("--tol", type=float, default=1e-10, required=True, help="Solver convergence tolerance.")
     parser.add_argument("--maxiter", type=int, default=10, required=True, help="Solver max iteration.")
     parser.add_argument("--force_boundary", action="store_true", help="Force boundary.")
+    parser.add_argument("--verbose", action="store_true", help="Verbose")
     args = parser.parse_args()
 
     Retau = args.Retau
@@ -162,11 +170,12 @@ if __name__ == "__main__":
     tol = args.tol
     maxiter = args.maxiter
     force_boundary = args.force_boundary
+    verbose = args.verbose
 
     dirname ="base_solution"
     y, u, k, omega = load_solution_komega(dirname)
     Retau = Retau
-    eqn = KOmegaEquation(y, u, k, omega, Retau)
+    eqn = KOmegaEquation(y, u, k, omega, Retau, verbose=verbose)
     eqn.dt = dt
     eqn.tol = tol
     eqn.maxiter = maxiter
